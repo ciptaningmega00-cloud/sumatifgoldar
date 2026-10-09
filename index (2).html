@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pesawat Tempur - Asesmen Biologi Hereditas</title>
+    <style>
+        /* Modern Native CSS Styling - Offline First, Zero External CDNs */
+        :root {
+            --bg-dark: #070913;
+            --panel-bg: rgba(15, 23, 42, 0.92);
+            --panel-border: rgba(0, 243, 255, 0.3);
+            --primary-cyan: #00f3ff;
+            --primary-blue: #3b82f6;
+            --accent-yellow: #ffd700;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-light: #f8fafc;
+            --text-dim: #94a3b8;
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: var(--font-family);
+            color: var(--text-light);
+        }
+
+        /* Fullscreen Space Canvas */
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Containers */
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(5, 7, 18, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .card-panel {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.15), inset 0 0 15px rgba(0, 243, 255, 0.05);
+            text-align: center;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            text-shadow: 0 0 12px rgba(0, 243, 255, 0.5);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .instruction-badge {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: var(--primary-cyan);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            text-align: left;
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-blue));
+            border: none;
+            border-radius: 14px;
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s active, filter 0.2s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+            filter: brightness(1.1);
+        }
+
+        /* HUD Overlay */
+        #hudOverlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .hud-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            color: #fff;
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+
+        .hud-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .hud-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--accent-yellow);
+        }
+
+        /* Multiple Choice Quiz Styling */
+        .quiz-question {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            text-align: left;
+            margin-bottom: 16px;
+            line-height: 1.45;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .option-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(0, 243, 255, 0.15);
+            border: 1px solid var(--primary-cyan);
+            color: var(--primary-cyan);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+            background: rgba(0, 243, 255, 0.2);
+        }
+
+        .option-btn.correct {
+            background: rgba(16, 185, 129, 0.25) !important;
+            border-color: var(--accent-green) !important;
+            color: #a7f3d0 !important;
+        }
+
+        .option-btn.correct .option-badge {
+            background: var(--accent-green) !important;
+            color: #000 !important;
+        }
+
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.25) !important;
+            border-color: var(--accent-red) !important;
+            color: #fca5a5 !important;
+        }
+
+        .option-btn.wrong .option-badge {
+            background: var(--accent-red) !important;
+            color: #fff !important;
+        }
+
+        .explanation-box {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            padding: 12px 14px;
+            text-align: left;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .explanation-title {
+            font-weight: 800;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* On-screen Touch Controls */
+        #touchControls {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            z-index: 15;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 46px);
+            grid-template-rows: repeat(3, 46px);
+            gap: 4px;
+            pointer-events: auto;
+        }
+
+        .dpad-btn {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1.5px solid rgba(0, 243, 255, 0.4);
+            border-radius: 12px;
+            color: var(--primary-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+
+        .dpad-btn:active {
+            background: rgba(0, 243, 255, 0.4);
+            transform: scale(0.92);
+        }
+
+        .dpad-center {
+            background: transparent;
+            border: none;
+        }
+
+        /* Result Screen Styling */
+        .score-display {
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: var(--accent-yellow);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            margin: 10px 0;
+            line-height: 1;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .review-list {
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 14px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        .review-item {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .card-panel { padding: 18px 16px; }
+            h1 { font-size: 1.35rem; }
+            .score-display { font-size: 2.6rem; }
+            .option-btn { padding: 12px 14px; font-size: 0.88rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD Overlay -->
+    <div id="hudOverlay" class="hidden">
+        <div class="hud-card">
+            <div id="hudPlayerName" style="font-weight: 700; color: var(--primary-cyan);">Siswa</div>
+            <div id="hudPlayerClass" style="font-size: 0.7rem; color: var(--text-dim);">Kelas XII</div>
+        </div>
+        <div class="hud-card" style="text-align: center;">
+            <div class="hud-title">Soal Dijawab</div>
+            <div class="hud-value"><span id="hudQuestionCount">0</span> / 5</div>
+        </div>
+        <div class="hud-card" style="text-align: right;">
+            <div class="hud-title">Skor</div>
+            <div id="hudScore" class="hud-value">0 Pts</div>
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="modal-overlay">
+        <div class="card-panel">
+            <h1>🚀 PESAWAT TEMPUR</h1>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-cyan); margin-bottom: 10px; letter-spacing: 1px;">
+                ASESMEN BIOLOGI
+            </div>
+            
+            <div class="instruction-badge">
+                <span>💡 Gerakkan pesawat atau tunggu soal muncul. Pilih jawaban yang benar.</span>
+            </div>
+
+            <form id="startForm" onsubmit="handleStartGame(event)">
+                <div class="form-group">
+                    <label for="inputName">Nama Lengkap Siswa</label>
+                    <input type="text" id="inputName" class="form-control" placeholder="Masukkan nama siswa..." required autocomplete="off">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inputAbsen">No. Absen</label>
+                        <input type="number" id="inputAbsen" class="form-control" placeholder="1" min="1" max="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputClass">Kelas</label>
+                        <select id="inputClass" class="form-control" required>
+                            <option value="XII IPA 1">XII 1</option>
+                            <option value="XII IPA 2">XII 2</option>
+                            <option value="XII IPA 3">XII 3</option>
+                            <option value="XII IPA 4">XII 4</option>
+                            <option value="XII F-1">XII F-1</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <span>▶ MULAI</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div id="quizModal" class="modal-overlay hidden">
+        <div class="card-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="font-size: 0.8rem; font-weight: 800; color: var(--accent-yellow); background: rgba(255,215,0,0.15); padding: 4px 10px; border-radius: 8px;">
+                    SOAL <span id="quizNumber">1</span> DARI 5
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-dim); font-weight: 600;">+20 Poin</span>
+            </div>
+
+            <div id="quizQuestionText" class="quiz-question">
+                Pertanyaan akan muncul di sini...
+            </div>
+
+            <div id="quizOptionsContainer" class="options-grid">
+                <!-- Option buttons injected by JS -->
+            </div>
+
+            <!-- Feedback / Explanation Box (Shown after selecting) -->
+            <div id="quizFeedbackBox" class="explanation-box hidden">
+                <div id="quizFeedbackTitle" class="explanation-title"></div>
+                <div id="quizFeedbackText" style="color: var(--text-light); font-size: 0.8rem;"></div>
+            </div>
+
+            <button id="btnContinue" onclick="handleContinueQuiz()" class="btn-primary hidden">
+                <span>LANJUT ▶</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="resultScreen" class="modal-overlay hidden">
+        <div class="card-panel" style="max-width: 560px;">
+            <div style="font-size: 0.75rem; font-weight: 800; color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                🏆 ASESMEN SELESAI
+            </div>
+            <h1>HASIL BIOLOGI</h1>
+            <div style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 14px;">Hereditas Manusia (Golongan Darah ABO & Pedigree)</div>
+
+            <div style="background: rgba(30,41,59,0.7); border-radius: 12px; padding: 10px 14px; text-align: left; font-size: 0.8rem; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <div><span style="color:var(--text-dim)">Nama:</span> <strong id="resName" style="color:#fff"></strong></div>
+                <div><span style="color:var(--text-dim)">No. Absen:</span> <strong id="resAbsen" style="color:#fff"></strong></div>
+                <div><span style="color:var(--text-dim)">Kelas:</span> <strong id="resClass" style="color:#fff"></strong></div>
+                <div><span style="color:var(--text-dim)">Benar / Salah:</span> <strong id="resCorrectWrong" style="color:#fff"></strong></div>
+            </div>
+
+            <div class="score-display" id="resScore">100</div>
+            <div id="resCategoryBadge" class="category-badge">Sangat Baik</div>
+
+            <div style="text-align: left; font-size: 0.78rem; font-weight: 700; color: var(--primary-cyan); margin-bottom: 6px;">
+                📋 RINGKASAN JAWABAN:
+            </div>
+            <div id="resReviewList" class="review-list">
+                <!-- Injected via JS -->
+            </div>
+
+            <button onclick="handleRestartGame()" class="btn-primary">
+                <span>🔄 ULANGI</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TOUCH CONTROLS (For Mobile Android) -->
+    <div id="touchControls" class="hidden">
+        <div class="dpad-container">
+            <div></div>
+            <button class="dpad-btn" id="btnUp">▲</button>
+            <div></div>
+            <button class="dpad-btn" id="btnLeft">◄</button>
+            <div class="dpad-center"></div>
+            <button class="dpad-btn" id="btnRight">►</button>
+            <div></div>
+            <button class="dpad-btn" id="btnDown">▼</button>
+            <div></div>
+        </div>
+        <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(0,243,255,0.3); padding: 6px 12px; border-radius: 10px; font-size: 0.7rem; color: var(--primary-cyan); font-weight: 600; pointer-events: auto;">
+            🎮 Kontrol Sentuh Opsional
+        </div>
+    </div>
+
+    <!-- NATIVE JAVASCRIPT GAME LOGIC -->
+    <script>
+        // Web Audio API Native Synthesizer
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        // Biology Diagnostic Assessment Questions
+        const QUESTIONS_DATA = [
+            {
+                id: 1,
+                question: "Sebutkan 4 fenotipe golongan darah pada sistem ABO manusia!",
+                options: [
+                    "A, B, AB, dan O",
+                    "A, B, O, dan Rhesus (Rh)",
+                    "A1, A2, B1, dan B2",
+                    "Positive, Negative, Neutral, dan Alpha"
+                ],
+                correctIndex: 0,
+                explanation: "Sistem golongan darah ABO manusia terdiri dari 4 fenotipe utama: Golongan darah A, B, AB, dan O."
+            },
+            {
+                id: 2,
+                question: "Susunan gen atau alel penyusun sifat yang tidak tampak dari luar (secara genetik) disebut...",
+                options: [
+                    "Fenotipe",
+                    "Genotipe",
+                    "Dominansi",
+                    "Hibridisasi"
+                ],
+                correctIndex: 1,
+                explanation: "Genotipe adalah susunan gen/alel penyusun sifat yang tidak tampak (seperti IᴬIᴬ, Iᴬi, ii), sedangkan Fenotipe adalah sifat yang tampak."
+            },
+            {
+                id: 3,
+                question: "Seorang anak memiliki fenotipe golongan darah O. Bagaimanakah susunan genotipenya?",
+                options: [
+                    "IᴬIᴬ (Homozigot Dominan)",
+                    "Iᴬi (Heterozigot)",
+                    "IᴬIᴮ (Kodominan)",
+                    "ii (Homozigot Resesif)"
+                ],
+                correctIndex: 3,
+                explanation: "Golongan darah O diatur oleh alel resesif ganda, sehingga susunan genotipenya pasti homozigot resesif yaitu (ii)."
+            },
+            {
+                id: 4,
+                question: "Sebutkan tiga alel yang mengendalikan golongan darah sistem ABO pada manusia!",
+                options: [
+                    "Alel A, B, dan O",
+                    "Alel Iᴬ, Iᴮ, dan i",
+                    "Alel X, Y, dan Z",
+                    "Alel H, h, dan o"
+                ],
+                correctIndex: 1,
+                explanation: "Golongan darah ABO dikendalikan oleh alel ganda: alel Iᴬ (membentuk antigen A), Iᴮ (membentuk antigen B), dan alel i (resesif)."
+            },
+            {
+                id: 5,
+                question: "Diagram visual yang digunakan untuk menelusuri pola pewarisan sifat antargenerasi dalam keluarga disebut...",
+                options: [
+                    "Diagram Venn",
+                    "Papan Punnett",
+                    "Diagram Silsilah (Pedigree)",
+                    "Karyotipe Kromosom"
+                ],
+                correctIndex: 2,
+                explanation: "Diagram Silsilah (Pedigree Chart) adalah diagram visual untuk menelusuri pola pewarisan sifat antargenerasi dalam keluarga."
+            }
+        ];
+
+        // Game State Variables
+        let gameState = 'FORM'; // 'FORM', 'PLAYING', 'QUIZ', 'FINISHED'
+        let studentProfile = { name: '', absen: '', class: '' };
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let answersHistory = [];
+
+        // Flight & Timer Automatic Automation Variables
+        let autoQuestionTimer = 0;
+        const AUTO_QUESTION_INTERVAL = 300; // ~5 seconds flight loop
+
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (player) {
+                player.x = Math.min(player.x, canvas.width - player.width);
+                player.y = Math.min(player.y, canvas.height - player.height);
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Player Jet Object
+        const player = {
+            x: window.innerWidth / 2 - 20,
+            y: window.innerHeight - 120,
+            width: 40,
+            height: 46,
+            speed: 6
+        };
+
+        // Key states
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false };
+
+        function setupInputListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+
+                // Keyboard Support for Quiz Answers (A/B/C/D, 1/2/3/4, Space/Enter)
+                if (gameState === 'QUIZ') {
+                    const keyUpper = e.key.toUpperCase();
+                    if (keyUpper === 'A' || e.key === '1') selectQuizOption(0);
+                    else if (keyUpper === 'B' || e.key === '2') selectQuizOption(1);
+                    else if (keyUpper === 'C' || e.key === '3') selectQuizOption(2);
+                    else if (keyUpper === 'D' || e.key === '4') selectQuizOption(3);
+                    else if ((e.key === 'Enter' || e.key === ' ') && !document.getElementById('btnContinue').classList.contains('hidden')) {
+                        handleContinueQuiz();
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+            });
+
+            // Touch D-Pad Controls
+            const bindTouchBtn = (id, keyName) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                const start = (e) => { e.preventDefault(); initAudio(); keys[keyName] = true; };
+                const end = (e) => { e.preventDefault(); keys[keyName] = false; };
+                btn.addEventListener('touchstart', start);
+                btn.addEventListener('touchend', end);
+                btn.addEventListener('mousedown', start);
+                btn.addEventListener('mouseup', end);
+            };
+
+            bindTouchBtn('btnUp', 'ArrowUp');
+            bindTouchBtn('btnDown', 'ArrowDown');
+            bindTouchBtn('btnLeft', 'ArrowLeft');
+            bindTouchBtn('btnRight', 'ArrowRight');
+        }
+
+        // Entities arrays
+        let stars = [];
+        let questionBoxes = [];
+        let asteroids = [];
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 3500);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.6 + 0.4,
+                    speed: Math.random() * 2 + 0.6,
+                    color: ['#00f3ff', '#ffd700', '#ffffff', '#a855f7'][Math.floor(Math.random() * 4)]
+                });
+            }
+        }
+
+        function spawnQuestionBox() {
+            if (questionBoxes.length > 0 || currentQuestionIndex >= 5) return;
+            questionBoxes.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -50,
+                width: 38,
+                height: 38,
+                speed: 2.2,
+                pulse: 0
+            });
+        }
+
+        function spawnAsteroid() {
+            if (asteroids.length > 5) return;
+            const r = Math.random() * 18 + 14;
+            asteroids.push({
+                x: Math.random() * (canvas.width - r * 2) + r,
+                y: -r * 2,
+                radius: r,
+                speed: Math.random() * 2 + 1.5,
+                angle: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.03
+            });
+        }
+
+        function updateGame() {
+            if (gameState !== 'PLAYING') return;
+
+            // Move Starfield
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+
+            // Player Steering
+            let dx = 0, dy = 0;
+            if (keys.ArrowUp || keys.w) dy -= 1;
+            if (keys.ArrowDown || keys.s) dy += 1;
+            if (keys.ArrowLeft || keys.a) dx -= 1;
+            if (keys.ArrowRight || keys.d) dx += 1;
+
+            if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+            player.x += dx * player.speed;
+            player.y += dy * player.speed;
+
+            // Screen bounds
+            player.x = Math.max(10, Math.min(canvas.width - player.width - 10, player.x));
+            player.y = Math.max(10, Math.min(canvas.height - player.height - 10, player.y));
+
+            // Asteroids update
+            if (Math.random() < 0.02) spawnAsteroid();
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                let ast = asteroids[i];
+                ast.y += ast.speed;
+                ast.angle += ast.rotSpeed;
+                if (ast.y > canvas.height + 40) asteroids.splice(i, 1);
+            }
+
+            // Question Box update & Spawning
+            if (questionBoxes.length === 0 && currentQuestionIndex < 5) {
+                spawnQuestionBox();
+            }
+
+            for (let i = questionBoxes.length - 1; i >= 0; i--) {
+                let box = questionBoxes[i];
+                box.y += box.speed;
+                box.pulse += 0.06;
+
+                // Check collision with jet plane
+                if (player.x < box.x + box.width &&
+                    player.x + player.width > box.x &&
+                    player.y < box.y + box.height &&
+                    player.y + player.height > box.y) {
+                    
+                    questionBoxes.splice(i, 1);
+                    openQuizModal();
+                    return;
+                }
+
+                if (box.y > canvas.height + 50) {
+                    box.y = -50;
+                    box.x = Math.random() * (canvas.width - 60) + 30;
+                }
+            }
+
+            // AUTOMATIC QUESTION TRIGGER (Siswa tidak wajib nabrak!)
+            autoQuestionTimer++;
+            if (autoQuestionTimer >= AUTO_QUESTION_INTERVAL) {
+                autoQuestionTimer = 0;
+                if (currentQuestionIndex < 5) {
+                    questionBoxes = [];
+                    openQuizModal();
+                }
+            }
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Stars
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.fill();
+            });
+
+            // Draw Question Mystery Boxes ('?')
+            questionBoxes.forEach(box => {
+                ctx.save();
+                ctx.translate(box.x + box.width / 2, box.y + box.height / 2);
+                const scale = 1 + Math.sin(box.pulse) * 0.08;
+                ctx.scale(scale, scale);
+
+                ctx.fillStyle = '#1e1b4b';
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2.5;
+
+                ctx.beginPath();
+                ctx.roundRect(-box.width / 2, -box.height / 2, box.width, box.height, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 20px sans-serif';
+                ctx.fillStyle = '#ffd700';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('?', 0, 1);
+                ctx.restore();
+            });
+
+            // Draw Asteroids
+            asteroids.forEach(ast => {
+                ctx.save();
+                ctx.translate(ast.x, ast.y);
+                ctx.rotate(ast.angle);
+                ctx.strokeStyle = '#a855f7';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                const sides = 6;
+                for (let i = 0; i < sides; i++) {
+                    const a = (i / sides) * Math.PI * 2;
+                    const r = ast.radius * (0.85 + Math.sin(i * 2) * 0.15);
+                    const px = Math.cos(a) * r;
+                    const py = Math.sin(a) * r;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // Draw Fighter Jet
+            if (gameState === 'PLAYING' || gameState === 'QUIZ') {
+                ctx.save();
+                ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+
+                // Engine Jet Flame
+                const flameH = 12 + Math.random() * 8;
+                ctx.beginPath();
+                ctx.moveTo(-8, player.height / 2);
+                ctx.lineTo(0, player.height / 2 + flameH);
+                ctx.lineTo(8, player.height / 2);
+                ctx.fillStyle = '#00f3ff';
+                ctx.fill();
+
+                // Jet Wings Body
+                ctx.fillStyle = '#0284c7';
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 2.5;
+
+                ctx.beginPath();
+                ctx.moveTo(0, -player.height / 2); // Nose
+                ctx.lineTo(player.width / 2, player.height / 2 - 4);
+                ctx.lineTo(player.width / 4, player.height / 2);
+                ctx.lineTo(-player.width / 4, player.height / 2);
+                ctx.lineTo(-player.width / 2, player.height / 2 - 4);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Cockpit
+                ctx.beginPath();
+                ctx.arc(0, -4, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        function gameLoop() {
+            updateGame();
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function handleStartGame(e) {
+            e.preventDefault();
+            initAudio();
+            playSound('pop');
+
+            studentProfile.name = document.getElementById('inputName').value.trim();
+            studentProfile.absen = document.getElementById('inputAbsen').value;
+            studentProfile.class = document.getElementById('inputClass').value;
+
+            // Update HUD
+            document.getElementById('hudPlayerName').textContent = studentProfile.name;
+            document.getElementById('hudPlayerClass').textContent = `Absen ${studentProfile.absen} | ${studentProfile.class}`;
+
+            // Reset scores & counters
+            score = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            currentQuestionIndex = 0;
+            answersHistory = [];
+            autoQuestionTimer = 0;
+            questionBoxes = [];
+
+            updateHUD();
+
+            // Toggle views
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('hudOverlay').classList.remove('hidden');
+            document.getElementById('touchControls').classList.remove('hidden');
+
+            gameState = 'PLAYING';
+        }
+
+        function updateHUD() {
+            document.getElementById('hudScore').textContent = `${score} Pts`;
+            document.getElementById('hudQuestionCount').textContent = currentQuestionIndex;
+        }
+
+        function openQuizModal() {
+            if (currentQuestionIndex >= 5) {
+                showFinalResults();
+                return;
+            }
+
+            gameState = 'QUIZ';
+            playSound('pop');
+
+            const qData = QUESTIONS_DATA[currentQuestionIndex];
+
+            document.getElementById('quizNumber').textContent = currentQuestionIndex + 1;
+            document.getElementById('quizQuestionText').textContent = qData.question;
+            document.getElementById('quizFeedbackBox').classList.add('hidden');
+            document.getElementById('btnContinue').classList.add('hidden');
+
+            const container = document.getElementById('quizOptionsContainer');
+            container.innerHTML = '';
+
+            const optionBadges = ['A', 'B', 'C', 'D'];
+            qData.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.onclick = () => selectQuizOption(idx);
+                btn.innerHTML = `
+                    <div class="option-badge">${optionBadges[idx]}</div>
+                    <div>${optText}</div>
+                `;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        let hasAnsweredCurrentQuiz = false;
+
+        function selectQuizOption(selectedIndex) {
+            const container = document.getElementById('quizOptionsContainer');
+            const btns = container.querySelectorAll('.option-btn');
+            
+            // Check if already answered
+            if (document.getElementById('btnContinue').classList.contains('hidden') === false) return;
+
+            initAudio();
+            const qData = QUESTIONS_DATA[currentQuestionIndex];
+            const isCorrect = (selectedIndex === qData.correctIndex);
+
+            if (isCorrect) {
+                score += 20;
+                correctCount++;
+                playSound('correct');
+            } else {
+                wrongCount++;
+                playSound('wrong');
+            }
+
+            // Save history
+            answersHistory.push({
+                question: qData.question,
+                userAnswer: qData.options[selectedIndex],
+                correctAnswer: qData.options[qData.correctIndex],
+                isCorrect: isCorrect,
+                explanation: qData.explanation
+            });
+
+            // Highlight buttons
+            btns.forEach((btn, idx) => {
+                btn.style.pointerEvents = 'none';
+                if (idx === qData.correctIndex) {
+                    btn.classList.add('correct');
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.classList.add('wrong');
+                } else {
+                    btn.style.opacity = '0.5';
+                }
+            });
+
+            // Display Feedback Box
+            const feedbackBox = document.getElementById('quizFeedbackBox');
+            const feedbackTitle = document.getElementById('quizFeedbackTitle');
+            const feedbackText = document.getElementById('quizFeedbackText');
+
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.style.borderColor = 'var(--accent-green)';
+                feedbackTitle.style.color = 'var(--accent-green)';
+                feedbackTitle.innerHTML = '<span>✓ Jawaban Benar (+20 Poin)</span>';
+            } else {
+                feedbackBox.style.borderColor = 'var(--accent-red)';
+                feedbackTitle.style.color = 'var(--accent-red)';
+                feedbackTitle.innerHTML = '<span>✕ Jawaban Salah (+0 Poin)</span>';
+            }
+            feedbackText.textContent = qData.explanation;
+
+            // Show Continue Button
+            document.getElementById('btnContinue').classList.remove('hidden');
+        }
+
+        function handleContinueQuiz() {
+            playSound('pop');
+            currentQuestionIndex++;
+            updateHUD();
+
+            document.getElementById('quizModal').classList.add('hidden');
+
+            if (currentQuestionIndex >= 5) {
+                showFinalResults();
+            } else {
+                autoQuestionTimer = 0;
+                gameState = 'PLAYING';
+            }
+        }
+
+        function showFinalResults() {
+            gameState = 'FINISHED';
+
+            document.getElementById('hudOverlay').classList.add('hidden');
+            document.getElementById('touchControls').classList.add('hidden');
+
+            document.getElementById('resName').textContent = studentProfile.name;
+            document.getElementById('resAbsen').textContent = studentProfile.absen;
+            document.getElementById('resClass').textContent = studentProfile.class;
+            document.getElementById('resCorrectWrong').textContent = `${correctCount} Benar / ${wrongCount} Salah`;
+            document.getElementById('resScore').textContent = score;
+
+            // Category Badge
+            const badge = document.getElementById('resCategoryBadge');
+            if (score >= 80) {
+                badge.textContent = "Sangat Baik (Paham Utuh)";
+                badge.style.background = "rgba(16, 185, 129, 0.2)";
+                badge.style.color = "#a7f3d0";
+                badge.style.border = "1px solid #10b981";
+            } else if (score >= 60) {
+                badge.textContent = "Baik (Paham Sebagian)";
+                badge.style.background = "rgba(0, 243, 255, 0.2)";
+                badge.style.color = "#a5f3fc";
+                badge.style.border = "1px solid #00f3ff";
+            } else if (score >= 40) {
+                badge.textContent = "CUKUP (Perlu Penguatan)";
+                badge.style.background = "rgba(255, 215, 0, 0.2)";
+                badge.style.color = "#fef08a";
+                badge.style.border = "1px solid #ffd700";
+            } else {
+                badge.textContent = "Perlu Bimbingan (Remedial)";
+                badge.style.background = "rgba(239, 68, 68, 0.2)";
+                badge.style.color = "#fca5a5";
+                badge.style.border = "1px solid #ef4444";
+            }
+
+            // Review List
+            const reviewContainer = document.getElementById('resReviewList');
+            reviewContainer.innerHTML = '';
+            answersHistory.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'review-item';
+                div.style.borderLeft = item.isCorrect ? '4px solid #10b981' : '4px solid #ef4444';
+                div.innerHTML = `
+                    <div style="font-weight:700; color:#fff; margin-bottom:2px;">${idx + 1}. ${item.question}</div>
+                    <div style="font-size:0.75rem; color:${item.isCorrect ? '#a7f3d0' : '#fca5a5'}">
+                        Jawaban Siswa: <strong>${item.userAnswer}</strong>
+                    </div>
+                    ${!item.isCorrect ? `<div style="font-size:0.75rem; color:#a7f3d0;">Kunci Jawaban: <strong>${item.correctAnswer}</strong></div>` : ''}
+                `;
+                reviewContainer.appendChild(div);
+            });
+
+            document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function handleRestartGame() {
+            playSound('pop');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            gameState = 'FORM';
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            initStars();
+            setupInputListeners();
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
